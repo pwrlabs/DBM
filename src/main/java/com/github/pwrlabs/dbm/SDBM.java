@@ -19,7 +19,7 @@ public class SDBM {
     private static final String rootPath = "staticDatabase/";
 
     public static boolean store(String valueName, Object value) {
-        if(value == null) return false;
+        if(value == null) return true;
 
         if(value instanceof Number) {
             store(valueName, (Number) value);
@@ -35,7 +35,7 @@ public class SDBM {
     }
 
     public static boolean store(String valueName, byte[] value) {
-        if(value == null) return false;
+        if(value == null) return true;
 
         String path = rootPath + valueName;
 
@@ -57,17 +57,17 @@ public class SDBM {
     }
 
     public static boolean store(String valueName, String value) {
-        if(value == null) return false;
+        if(value == null) return true;
         return store(valueName, value.getBytes(StandardCharsets.UTF_8));
     }
 
     public static boolean store(String valueName, Number value) {
-        if(value == null) return false;
+        if(value == null) return true;
     	return store(valueName, getByteArrayValue(value));
     }
 
     public static boolean store(String valueName, Boolean value) {
-        if(value == null) return false;
+        if(value == null) return true;
     	return store(valueName, new byte[] { value ? (byte)1 : (byte)0 });
     }
 

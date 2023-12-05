@@ -28,6 +28,8 @@ public class DBM {
     }
 
     public boolean store(String valueName, Object value) {
+        if(value == null) return true;
+
         if(value instanceof Number) {
             store(valueName, (Number) value);
         }
@@ -42,6 +44,8 @@ public class DBM {
     }
 
     public boolean store(String valueName, byte[] value) {
+        if(value == null) return true;
+
         String path = rootPath + valueName;
 
         // Create parent directories if necessary
