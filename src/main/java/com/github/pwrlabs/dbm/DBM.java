@@ -84,6 +84,7 @@ public class DBM {
 
     public String loadString(String valueName) {
         JSONObject data = getDataFile();
+        if(data == null) return null;
         if(!data.has(valueName)) {
             return null;
         } else {
@@ -93,6 +94,7 @@ public class DBM {
 
     public Short loadShort(String valueName) {
         JSONObject data = getDataFile();
+        if(data == null) return 0;
         if(!data.has(valueName)) {
             return 0;
         } else {
@@ -102,6 +104,7 @@ public class DBM {
 
     public Integer loadInt(String valueName) {
         JSONObject data = getDataFile();
+        if(data == null) return 0;
         if(!data.has(valueName)) {
             return 0;
         } else {
@@ -111,6 +114,7 @@ public class DBM {
 
     public double loadDouble(String valueName) {
         JSONObject data = getDataFile();
+        if(data == null) return 0;
         if(!data.has(valueName)) {
             return 0;
         } else {
@@ -120,6 +124,7 @@ public class DBM {
 
     public boolean loadBoolean(String valueName) {
         JSONObject data = getDataFile();
+        if(data == null) return false;
         if(!data.has(valueName)) {
             return false;
         } else {
@@ -129,6 +134,7 @@ public class DBM {
 
     public Long loadLong(String valueName) {
         JSONObject data = getDataFile();
+        if(data == null) return 0L;
         if(!data.has(valueName)) {
             return 0L;
         } else {
@@ -138,6 +144,7 @@ public class DBM {
 
     public BigInteger loadBigInt(String valueName) {
         JSONObject data = getDataFile();
+        if(data == null) return BigInteger.ZERO;
         if(!data.has(valueName)) {
             return BigInteger.ZERO;
         } else {
@@ -147,6 +154,7 @@ public class DBM {
 
     public BigDecimal loadBigDec(String valueName) {
         JSONObject data = getDataFile();
+        if(data == null) return BigDecimal.ZERO;
         if(!data.has(valueName)) {
             return BigDecimal.ZERO;
         } else {
