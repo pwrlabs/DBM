@@ -10,6 +10,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class DBM {
 
@@ -39,6 +42,20 @@ public class DBM {
 
     }
 
+    public JSONObject getDataFile() {
+        try {
+            JSONObject data = (JSONObject) TimedCache.get(dataFile);
+            if(data == null) {
+                data = new JSONObject(Files.readString(Paths.get(dataFile)));
+                TimedCache.put(dataFile, data);
+            }
+            return data;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new JSONObject();
+        }
+    }
+
     public boolean store(Object... namesAndValues) {
         if(namesAndValues.length % 2 != 0) throw new RuntimeException("Names and values must be in pairs");
 
@@ -57,17 +74,6 @@ public class DBM {
             return false;
         }
 
-    }
-
-    public JSONObject getDataFile() {
-        try {
-            String jsonStr = Files.readString(Paths.get(dataFile));
-            if (jsonStr == null || jsonStr.isEmpty()) return new JSONObject();
-            return new JSONObject(jsonStr);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     public byte[] load(String valueName) {

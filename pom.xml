@@ -6,7 +6,7 @@
 
     <groupId>com.github.pwrlabs</groupId>
     <artifactId>dbm</artifactId>
-    <version>3.0.1</version>
+    <version>3.0.2</version>
 
     <name>DBM</name>
     <description>DBM is a lightweight, simple, easy to use Java library for storage and retrieval of data without the use of a database.
@@ -33,6 +33,13 @@
             <artifactId>json</artifactId>
             <version>20210307</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.0.0-jre</version> <!-- Use the latest version -->
+        </dependency>
+
     </dependencies>
 
     <properties>
