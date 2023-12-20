@@ -1,5 +1,5 @@
 package com.github.pwrlabs.dbm;
-
+import org.json.JSONObject;
 
 import java.io.*;
 import java.lang.reflect.Constructor;
@@ -25,121 +25,135 @@ public class DBM {
         this.id = id;
 
         rootPath = "database/" + this.getClass().getSimpleName() + "/" + id + "/";
+        JSONObject dbm = new JSONObject();
     }
 
-    public boolean store(String valueName, Object value) {
-        if(value == null) return true;
+    public boolean store(Object... namesAndValues) {
+        if(namesAndValues.length % 2 != 0) throw new RuntimeException("Names and values must be in pairs");
 
-        if(value instanceof Number) {
-            store(valueName, (Number) value);
+        JSONObject json = new JSONObject();
+
+        File jsonFile = new File(rootPath + "data.json");
+        if(jsonFile.exists()) {
+            try {
+                json = new JSONObject(Files.readString(Paths.get(rootPath + "data.json")));
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        } else {
+            try {
+                Files.createDirectories(Paths.get(rootPath));
+                jsonFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
         }
-        else if(value instanceof String) {
-            store(valueName, value.toString());
+
+        for(int t=0; t < namesAndValues.length; t+= 2) {
+            json.put(namesAndValues[t].toString(), namesAndValues[t+1].toString());
         }
-        else if (value instanceof byte[]){
-        	store(valueName, (byte[]) value);
-        }
-
-        return true;
-    }
-
-    public boolean store(String valueName, byte[] value) {
-        if(value == null) return true;
-
-        String path = rootPath + valueName;
-
-        // Create parent directories if necessary
         try {
-            Files.createDirectories(Paths.get(path).getParent());
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-
-        try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(path))) {
-            bos.write(value);
+            Files.writeString(Paths.get(rootPath + "data.json"), json.toString());
             return true;
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
+
     }
 
-    public boolean store(String valueName, String value) {
-    	if(value == null) return true;
-        return store(valueName, value.getBytes(StandardCharsets.UTF_8));
-    }
-
-    public boolean store(String valueName, Number value) {
-    	if(value == null) return true;
-    	return store(valueName, getByteArrayValue(value));
-    }
-
-    public boolean store(String valueName, Boolean value) {
-    	if(value == null) return true;
-    	return store(valueName, new byte[] { value ? (byte)1 : (byte)0 });
-    }
-
-    public byte[] load(String valueName) {
-        String path = rootPath + valueName;
-        if (!Files.exists(Paths.get(path))) return null;
-
-        try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(path))) {
-            List<Byte> byteList = new ArrayList<>();
-            int byteRead;
-            while ((byteRead = bis.read()) != -1) {
-                byteList.add((byte) byteRead);
+    public JSONObject getDataFile() {
+        File jsonFile = new File(rootPath + "data.json");
+        if(jsonFile.exists()) {
+            try {
+                return new JSONObject(Files.readString(Paths.get(rootPath + "data.json")));
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
             }
-
-            byte[] data = new byte[byteList.size()];
-            for (int i = 0; i < byteList.size(); i++) {
-                data[i] = byteList.get(i);
-            }
-
-            return data;
-        } catch (IOException e) {
+        } else {
             return null;
         }
     }
 
+    public byte[] load(String valueName) {
+        JSONObject data = getDataFile();
+        if(data == null) return null;
+        return Hex.decode(data.getString(valueName));
+    }
+
     public String loadString(String valueName) {
-        byte[] value = load(valueName);
-        return value != null ? new String(value, StandardCharsets.UTF_8) : null;
+        JSONObject data = getDataFile();
+        if(!data.has(valueName)) {
+            return null;
+        } else {
+            return data.getString(valueName);
+        }
     }
 
     public Short loadShort(String valueName) {
-        byte[] value = load(valueName);
-        return value != null ? (short) getNumberValue(value) : 0;
+        JSONObject data = getDataFile();
+        if(!data.has(valueName)) {
+            return 0;
+        } else {
+            return Short.parseShort(data.getString(valueName));
+        }
     }
 
     public Integer loadInt(String valueName) {
-        byte[] value = load(valueName);
-        return value != null ? (Integer) getNumberValue(value) : 0;
+        JSONObject data = getDataFile();
+        if(!data.has(valueName)) {
+            return 0;
+        } else {
+            return Integer.parseInt(data.getString(valueName));
+        }
     }
 
     public double loadDouble(String valueName) {
-        byte[] value = load(valueName);
-        return value != null ? ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN).getDouble() : 0;
+        JSONObject data = getDataFile();
+        if(!data.has(valueName)) {
+            return 0;
+        } else {
+            return Double.parseDouble(data.getString(valueName));
+        }
     }
 
     public boolean loadBoolean(String valueName) {
-        byte[] value = load(valueName);
-        return value != null ? value[0] != 0 : false;
+        JSONObject data = getDataFile();
+        if(!data.has(valueName)) {
+            return false;
+        } else {
+            return Boolean.parseBoolean(data.getString(valueName));
+        }
     }
 
     public Long loadLong(String valueName) {
-        byte[] value = load(valueName);
-        return value != null ? (Long) getNumberValue(value) : 0;
+        JSONObject data = getDataFile();
+        if(!data.has(valueName)) {
+            return 0L;
+        } else {
+            return Long.parseLong(data.getString(valueName));
+        }
     }
 
     public BigInteger loadBigInt(String valueName) {
-        byte[] value = load(valueName);
-        return value != null ? new BigInteger(1, value) : BigInteger.ZERO;
+        JSONObject data = getDataFile();
+        if(!data.has(valueName)) {
+            return BigInteger.ZERO;
+        } else {
+            return new BigInteger(data.getString(valueName));
+        }
     }
 
     public BigDecimal loadBigDec(String valueName) {
-        byte[] value = load(valueName);
-        return value != null ? (BigDecimal) getNumberValue(value) : BigDecimal.ZERO;
+        JSONObject data = getDataFile();
+        if(!data.has(valueName)) {
+            return BigDecimal.ZERO;
+        } else {
+            return new BigDecimal(data.getString(valueName));
+        }
     }
 
     // Returns creation time of the folder holding the data of this class/The
@@ -200,57 +214,5 @@ public class DBM {
         }
 
     }
-
-    public static byte[] getByteArrayValue(Number value) {
-        if (value instanceof Integer) {
-            return ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.LITTLE_ENDIAN)
-                    .putInt((int)value).array();
-        } else if (value instanceof Short) {
-            return ByteBuffer.allocate(Short.BYTES).order(ByteOrder.LITTLE_ENDIAN)
-                    .putShort((short)value).array();
-        } else if (value instanceof Long) {
-            return ByteBuffer.allocate(Long.BYTES).order(ByteOrder.LITTLE_ENDIAN)
-                    .putLong((long)value).array();
-        } else if (value instanceof BigInteger) {
-            byte[] unscaledByteArray = ((BigInteger)value).toByteArray();
-            return ByteBuffer.allocate(unscaledByteArray.length + 4).order(ByteOrder.LITTLE_ENDIAN)
-                    .putInt(0)
-                    .put(unscaledByteArray)
-                    .array();
-        } else if (value instanceof BigDecimal) {
-            BigInteger unscaledValue = ((BigDecimal)value).unscaledValue();
-            byte[] unscaledByteArray = unscaledValue.toByteArray();
-            return ByteBuffer.allocate(unscaledByteArray.length + 4).order(ByteOrder.LITTLE_ENDIAN)
-                    .putInt(((BigDecimal)value).scale())
-                    .put(unscaledByteArray)
-                    .array();
-        } else if (value instanceof Double) {
-            return ByteBuffer.allocate(Double.BYTES).order(ByteOrder.LITTLE_ENDIAN)
-                    .putDouble((double)value).array();
-        } else {
-            throw new IllegalArgumentException("Unsupported numeric type: " + value.getClass());
-        }
-    }
-
-    public static Number getNumberValue(byte[] byteArray) {
-        ByteBuffer buffer = ByteBuffer.wrap(byteArray).order(ByteOrder.LITTLE_ENDIAN);
-        if (byteArray.length == Integer.BYTES) {
-            return buffer.getInt();
-        } else if (byteArray.length == Short.BYTES) {
-            return buffer.getShort();
-        } else if (byteArray.length == Long.BYTES) {
-            return buffer.getLong();
-        } else if (byteArray.length > 4) {
-            int scale = buffer.getInt();
-            byte[] unscaledByteArray = Arrays.copyOfRange(byteArray, 4, byteArray.length);
-            BigInteger unscaledValue = new BigInteger(1, unscaledByteArray);
-            return new BigDecimal(unscaledValue, scale);
-        } else if (byteArray.length == Double.BYTES) {
-            return buffer.getDouble();
-        } else {
-            throw new IllegalArgumentException("Invalid byte array length: " + byteArray.length);
-        }
-    }
-
 
 }
