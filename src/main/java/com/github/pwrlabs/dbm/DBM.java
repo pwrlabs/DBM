@@ -45,10 +45,14 @@ public class DBM {
     public JSONObject getDataFile() {
         try {
             JSONObject data = (JSONObject) TimedCache.get(dataFile);
+
             if(data == null) {
-                data = new JSONObject(Files.readString(Paths.get(dataFile)));
+                String dataStr = Files.readString(Paths.get(dataFile));
+                if(dataStr == null || dataStr.isEmpty()) return new JSONObject();
+                data = new JSONObject(dataStr);
                 TimedCache.put(dataFile, data);
             }
+
             return data;
         } catch (IOException e) {
             e.printStackTrace();
@@ -68,6 +72,7 @@ public class DBM {
 
         try {
             Files.writeString(Paths.get(dataFile), json.toString());
+            TimedCache.put(dataFile, json);
             return true;
         } catch (IOException e) {
             e.printStackTrace();
