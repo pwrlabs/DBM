@@ -1,4 +1,5 @@
 package com.github.pwrlabs.dbm;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -152,6 +153,26 @@ public class DBM {
             return BigDecimal.ZERO;
         } else {
             return new BigDecimal(data.getString(valueName));
+        }
+    }
+
+    public JSONObject loadJSON(String valueName) {
+        JSONObject data = getDataFile();
+        if(data == null) return new JSONObject();
+        if(!data.has(valueName)) {
+            return new JSONObject();
+        } else {
+            return new JSONObject(data.getString(valueName));
+        }
+    }
+
+    public JSONArray loadJSONArray(String valueName) {
+        JSONObject data = getDataFile();
+        if(data == null) return new JSONArray();
+        if(!data.has(valueName)) {
+            return new JSONArray();
+        } else {
+            return new JSONArray(data.getString(valueName));
         }
     }
 
