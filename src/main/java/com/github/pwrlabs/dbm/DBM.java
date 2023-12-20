@@ -25,7 +25,11 @@ public class DBM {
         this.id = id;
 
         rootPath = "database/" + this.getClass().getSimpleName() + "/" + id + "/";
-        JSONObject dbm = new JSONObject();
+        try {
+            Files.createDirectories(Paths.get(rootPath));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean store(Object... namesAndValues) {
@@ -41,19 +45,13 @@ public class DBM {
                 e.printStackTrace();
                 return false;
             }
-        } else {
-            try {
-                Files.createDirectories(Paths.get(rootPath));
-                jsonFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
         }
 
         for(int t=0; t < namesAndValues.length; t+= 2) {
+            if(namesAndValues[t+1] == null) continue;
             json.put(namesAndValues[t].toString(), namesAndValues[t+1].toString());
         }
+
         try {
             Files.writeString(Paths.get(rootPath + "data.json"), json.toString());
             return true;
