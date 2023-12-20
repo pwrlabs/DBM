@@ -5,47 +5,43 @@ import java.io.*;
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class DBM {
 
     public final String id;
-    public final String rootPath;
+    public final String dataFile;
 
     public DBM(String id) {
         this.id = id;
 
-        rootPath = "database/" + this.getClass().getSimpleName() + "/" + id + "/";
-        try {
-            Files.createDirectories(Paths.get(rootPath));
-        } catch (IOException e) {
-            e.printStackTrace();
+        String rootPath = "database/" + this.getClass().getSimpleName() + "/";
+        this.dataFile = rootPath + id + "-data.json";
+
+        File dir = new File(rootPath);
+        if(!dir.exists()) {
+            dir.mkdirs();
         }
+
+        File file = new File(dataFile);
+        if(!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Failed to create file: " + dataFile);
+            }
+        }
+
     }
 
     public boolean store(Object... namesAndValues) {
         if(namesAndValues.length % 2 != 0) throw new RuntimeException("Names and values must be in pairs");
 
-        JSONObject json = new JSONObject();
-
-        File jsonFile = new File(rootPath + "data.json");
-        if(jsonFile.exists()) {
-            try {
-                json = new JSONObject(Files.readString(Paths.get(rootPath + "data.json")));
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
+        JSONObject json = getDataFile();
 
         for(int t=0; t < namesAndValues.length; t+= 2) {
             if(namesAndValues[t+1] == null) continue;
@@ -53,7 +49,7 @@ public class DBM {
         }
 
         try {
-            Files.writeString(Paths.get(rootPath + "data.json"), json.toString());
+            Files.writeString(Paths.get(dataFile), json.toString());
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -63,15 +59,12 @@ public class DBM {
     }
 
     public JSONObject getDataFile() {
-        File jsonFile = new File(rootPath + "data.json");
-        if(jsonFile.exists()) {
-            try {
-                return new JSONObject(Files.readString(Paths.get(rootPath + "data.json")));
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
-        } else {
+        try {
+            String jsonStr = Files.readString(Paths.get(dataFile));
+            if (jsonStr == null || jsonStr.isEmpty()) return new JSONObject();
+            return new JSONObject(jsonStr);
+        } catch (IOException e) {
+            e.printStackTrace();
             return null;
         }
     }
@@ -165,7 +158,7 @@ public class DBM {
     // Returns creation time of the folder holding the data of this class/The
     // creation time of the class
     public long getCreationTime() {
-        Path path = Paths.get(rootPath);
+        Path path = Paths.get(dataFile);
 
         try {
             BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
@@ -177,23 +170,10 @@ public class DBM {
     }
 
     public void delete(String valueName) {
-        String path = rootPath + valueName;
-        File file = new File(path);
+        File file = new File(dataFile);
 
         file.delete();
     }
-
-    public void deleteAll() {
-
-        File folder = new File(rootPath);
-
-        for (File file : folder.listFiles()) {
-            file.delete();
-        }
-
-        folder.delete();
-    }
-
     public static <T> void loadAllObjectsFromDatabase(Class<T> c) throws NoSuchMethodException, SecurityException {
 
         // Get the constructor object for the Person class that takes a String and an
@@ -210,8 +190,9 @@ public class DBM {
 
         for (String key : dir.list()) {
             try {
-                System.out.println("key: " + key);
-                constructor.newInstance(key);
+                String id = key.replace("-data.json", "");
+                System.out.println("id: " + id);
+                constructor.newInstance(id);
                 System.out.println("Loaded " + c.getSimpleName() + " Object");
             } catch (Exception e) {
                 // TODO Auto-generated catch block
