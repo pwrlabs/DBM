@@ -71,8 +71,8 @@ public class DBM {
         }
 
         try {
-            Files.writeString(Paths.get(dataFile), json.toString());
             TimedCache.put(dataFile, json);
+            Files.writeString(Paths.get(dataFile), json.toString());
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -84,6 +84,7 @@ public class DBM {
     public byte[] load(String valueName) {
         JSONObject data = getDataFile();
         if(data == null) return null;
+        if(!data.has(valueName)) return null;
         return Hex.decode(data.getString(valueName));
     }
 
