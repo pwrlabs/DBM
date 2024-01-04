@@ -207,6 +207,30 @@ public class DBM {
 
         file.delete();
     }
+
+    public void deleteObject() {
+        File directory = new File(dataFile);
+
+        // Make sure the file or directory exists and is not null
+        if (directory != null && directory.exists()) {
+            deleteDirectory(directory);
+        }
+    }
+
+    private void deleteDirectory(File file) {
+        File[] contents = file.listFiles(); // List all the directory contents
+        if (contents != null) {
+            for (File f : contents) {
+                if (f.isDirectory()) {
+                    deleteDirectory(f); // Recursive call for sub-directories
+                } else {
+                    f.delete(); // Delete files
+                }
+            }
+        }
+        file.delete(); // Delete the directory (now empty)
+    }
+
     public static <T> void loadAllObjectsFromDatabase(Class<T> c) throws NoSuchMethodException, SecurityException {
 
         // Get the constructor object for the Person class that takes a String and an

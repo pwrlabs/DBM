@@ -6,7 +6,7 @@
 
     <groupId>com.github.pwrlabs</groupId>
     <artifactId>dbm</artifactId>
-    <version>3.0.4</version>
+    <version>3.0.5</version>
 
     <name>DBM</name>
     <description>DBM is a lightweight, simple, easy to use Java library for storage and retrieval of data without the use of a database.
