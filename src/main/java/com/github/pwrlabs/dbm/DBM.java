@@ -10,6 +10,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -22,24 +25,22 @@ public class DBM {
     public DBM(String id) {
         this.id = id;
 
-        String rootPath = "database/" + this.getClass().getSimpleName() + "/";
-        this.dataFile = rootPath + id + "-data.json";
+        String rootPath;
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(id.getBytes());
+            BigInteger number = new BigInteger(1, hashBytes);
+            BigInteger folderId = number.remainder(BigInteger.valueOf(10000));
+            rootPath = "database/" + this.getClass().getSimpleName() + "/" + folderId + "/";
+            this.dataFile = rootPath + id;
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Failed to create DBM object, " + e.getLocalizedMessage());
+        }
 
         File dir = new File(rootPath);
         if(!dir.exists()) {
             dir.mkdirs();
         }
-
-        File file = new File(dataFile);
-        if(!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-                System.out.println("Failed to create file: " + dataFile);
-            }
-        }
-
     }
 
     public JSONObject getDataFile() {
@@ -61,12 +62,21 @@ public class DBM {
     }
 
     public boolean store(Object... namesAndValues) {
+
         if(namesAndValues.length % 2 != 0) throw new RuntimeException("Names and values must be in pairs");
+
+        File file = new File(dataFile);
+        if(!file.exists()) {
+            try {file.createNewFile();} catch (IOException e) {throw new RuntimeException("Failed to create file, " + e.getLocalizedMessage());}
+        }
 
         JSONObject json = getDataFile();
 
         for(int t=0; t < namesAndValues.length; t+= 2) {
-            if(namesAndValues[t+1] == null) continue;
+            if(namesAndValues[t+1] instanceof byte[]) {
+                json.put(namesAndValues[t].toString(), Base64.getEncoder().encodeToString((byte[]) namesAndValues[t+1]));
+                continue;
+            }
             json.put(namesAndValues[t].toString(), namesAndValues[t+1].toString());
         }
 
@@ -85,7 +95,7 @@ public class DBM {
         JSONObject data = getDataFile();
         if(data == null) return null;
         if(!data.has(valueName)) return null;
-        return Hex.decode(data.getString(valueName));
+        return Base64.getDecoder().decode(data.getString(valueName));
     }
 
     public String loadString(String valueName) {
